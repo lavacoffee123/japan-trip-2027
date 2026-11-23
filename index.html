@@ -1,0 +1,1109 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>日本 10 日行程 · 成田进关西出</title>
+<meta name="description" content="2027 年 1 月 12–21 日，东京、大阪、镰仓、河口湖与京都行程地图">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+<style>
+/* ═══════════════════════════════════════════
+   Design System — edit :root to change theme
+   ═══════════════════════════════════════════ */
+:root {
+  --bg-primary:    #ffffff;
+  --bg-secondary:  #f5f5f7;
+  --bg-tertiary:   #fbfbfd;
+  --bg-grouped:    #f2f2f7;
+  --bg-elevated:   #ffffff;
+  --text-primary:   #1d1d1f;
+  --text-secondary: #86868b;
+  --text-tertiary:  #aeaeb2;
+  --accent:        #0071e3;
+  --accent-hover:  #0077ed;
+  --tint-red:    #ff3b30;
+  --tint-orange: #ff9500;
+  --tint-green:  #34c759;
+  --tint-blue:   #007aff;
+  --tint-purple: #af52de;
+  --tint-pink:   #ff2d55;
+  --separator:  rgba(60, 60, 67, .12);
+  --shadow-sm:  0 1px 3px rgba(0,0,0,.06), 0 1px 2px rgba(0,0,0,.04);
+  --shadow-md:  0 4px 14px rgba(0,0,0,.08);
+  --shadow-lg:  0 8px 30px rgba(0,0,0,.12);
+  --radius-sm:  8px;
+  --radius-md:  12px;
+  --radius-lg:  16px;
+  --radius-xl:  20px;
+  --safe-top:    env(safe-area-inset-top, 0px);
+  --safe-bottom: env(safe-area-inset-bottom, 0px);
+}
+* { margin: 0; padding: 0; box-sizing: border-box; }
+body {
+  font-family: -apple-system, BlinkMacSystemFont, "SF Pro Text", "SF Pro Display",
+               "Helvetica Neue", "Arial", sans-serif;
+  background: var(--bg-secondary);
+  color: var(--text-primary);
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  line-height: 1.47059;
+  letter-spacing: -0.022em;
+}
+a { color: var(--accent); text-decoration: none; }
+a:hover { text-decoration: underline; }
+
+/* ── Map ── */
+#map { width: 100%; height: 40vh; min-height: 280px; position: sticky; top: 0; z-index: 100; }
+.locate-btn {
+  width: 36px; height: 36px; border-radius: 8px;
+  background: rgba(255,255,255,.92); backdrop-filter: blur(8px);
+  border: none; box-shadow: 0 1px 4px rgba(0,0,0,.18);
+  display: flex; align-items: center; justify-content: center;
+  font-size: 18px; cursor: pointer; -webkit-tap-highlight-color: transparent;
+}
+.locate-btn.active { color: #007aff; }
+@keyframes loc-pulse {
+  0%   { transform: scale(1); opacity: .55; }
+  100% { transform: scale(2.4); opacity: 0; }
+}
+.loc-pulse {
+  width: 14px; height: 14px; border-radius: 50%;
+  background: rgba(0,122,255,.25);
+  animation: loc-pulse 1.6s ease-out infinite;
+}
+
+/* ── Tabs ── */
+.tabs {
+  display: flex; gap: 6px; padding: 12px 16px; overflow-x: auto; -webkit-overflow-scrolling: touch;
+  background: rgba(255,255,255,.85); -webkit-backdrop-filter: saturate(180%) blur(20px);
+  backdrop-filter: saturate(180%) blur(20px); position: sticky; top: 40vh; z-index: 99;
+  border-bottom: .5px solid var(--separator); scrollbar-width: none;
+}
+.tabs::-webkit-scrollbar { display: none; }
+.tab {
+  flex-shrink: 0; padding: 7px 16px; border-radius: 980px; border: none;
+  background: var(--bg-grouped); color: var(--text-secondary);
+  font-size: 14px; font-weight: 500; cursor: pointer; transition: all .25s ease;
+  white-space: nowrap; letter-spacing: -0.01em;
+}
+.tab:active { transform: scale(.96); }
+.tab.active { background: var(--accent); color: #fff; }
+
+/* ── Main content ── */
+.content { max-width: 680px; margin: 0 auto; padding: 16px 16px calc(24px + var(--safe-bottom)); }
+
+/* ── Overview ── */
+.hero { text-align: center; padding: 28px 20px 20px; }
+.hero h1 { font-size: 28px; font-weight: 700; letter-spacing: -0.025em; line-height: 1.15; }
+.hero .subtitle { font-size: 17px; color: var(--text-secondary); margin-top: 6px; font-weight: 400; }
+
+.info-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 20px; }
+.info-card { background: var(--bg-elevated); border-radius: var(--radius-lg); padding: 16px; box-shadow: var(--shadow-sm); }
+.info-card .label { font-size: 12px; font-weight: 600; color: var(--text-secondary); text-transform: uppercase; letter-spacing: .02em; margin-bottom: 6px; }
+.info-card .value { font-size: 15px; font-weight: 600; line-height: 1.4; }
+
+/* ── Section headers ── */
+.section-head { font-size: 13px; font-weight: 600; color: var(--text-secondary); text-transform: uppercase; letter-spacing: .03em; padding: 20px 0 8px; }
+
+/* ── Day header ── */
+.day-head { padding: 20px 0 12px; }
+.day-head h2 { font-size: 22px; font-weight: 700; letter-spacing: -0.02em; }
+.day-head p { font-size: 15px; color: var(--text-secondary); margin-top: 2px; }
+
+/* ── Route bar ── */
+.route-bar { background: var(--bg-elevated); border-radius: var(--radius-md); padding: 12px 14px; margin-bottom: 14px; box-shadow: var(--shadow-sm); font-size: 13px; color: var(--text-secondary); line-height: 1.7; white-space: pre-line; }
+.route-bar strong { color: var(--text-primary); }
+
+/* ── Timeline ── */
+.timeline { position: relative; padding-left: 24px; }
+.timeline::before { content: ''; position: absolute; left: 7px; top: 20px; bottom: 20px; width: 1.5px; background: var(--separator); }
+.tl-item { position: relative; margin-bottom: 10px; }
+.tl-dot { position: absolute; left: -20px; top: 18px; width: 10px; height: 10px; border-radius: 50%; z-index: 1; box-shadow: 0 0 0 3px var(--bg-secondary); }
+.tl-dot.food    { background: var(--tint-red); }
+.tl-dot.spot    { background: var(--tint-blue); }
+.tl-dot.hotel   { background: var(--tint-orange); }
+.tl-dot.drink   { background: var(--tint-purple); }
+.tl-dot.transport { background: var(--text-tertiary); }
+
+/* ── Card ── */
+.card { background: var(--bg-elevated); border-radius: var(--radius-md); padding: 14px 16px; box-shadow: var(--shadow-sm); transition: box-shadow .25s ease; cursor: pointer; }
+.card:active { box-shadow: var(--shadow-md); }
+.card .time { font-size: 12px; font-weight: 600; color: var(--text-tertiary); letter-spacing: .01em; }
+.card .name { font-size: 17px; font-weight: 600; margin: 2px 0 4px; letter-spacing: -0.01em; display: flex; align-items: center; gap: 6px; }
+.card .desc { font-size: 14px; color: var(--text-secondary); line-height: 1.45; }
+
+/* Badge */
+.badge { display: inline-flex; align-items: center; font-size: 11px; font-weight: 700; padding: 1px 7px; border-radius: 4px; }
+.badge.food   { background: rgba(255,59,48,.1);  color: var(--tint-red); }
+.badge.spot   { background: rgba(0,122,255,.1);  color: var(--tint-blue); }
+.badge.drink  { background: rgba(175,82,222,.1); color: var(--tint-purple); }
+
+/* Budget */
+.budget { display: inline-block; margin-top: 6px; padding: 3px 10px; background: var(--bg-grouped); border-radius: var(--radius-sm); font-size: 12px; color: var(--text-secondary); font-weight: 500; }
+
+/* Payment */
+.pays { display: flex; gap: 4px; flex-wrap: wrap; margin-top: 6px; }
+.pay { font-size: 11px; padding: 2px 7px; border-radius: 4px; font-weight: 600; }
+.pay.ok  { background: rgba(52,199,89,.1);  color: var(--tint-green); }
+.pay.no  { background: rgba(255,59,48,.08); color: var(--tint-red); }
+.pay.idk { background: rgba(255,149,0,.1);  color: var(--tint-orange); }
+
+/* Links row */
+.links { display: flex; gap: 8px; margin-top: 10px; flex-wrap: wrap; }
+.btn {
+  display: inline-flex; align-items: center; gap: 4px;
+  padding: 8px 14px; border-radius: var(--radius-sm);
+  font-size: 13px; font-weight: 600; border: none; cursor: pointer;
+  text-decoration: none !important; transition: filter .2s;
+}
+.btn:active { filter: brightness(.9); }
+.btn.nav    { background: var(--accent); color: #fff; }
+.btn.xhs    { background: #ff2442; color: #fff; }
+.btn.dp     { background: #ffa700; color: #fff; }
+.btn.rsv    { background: var(--tint-green); color: #fff; }
+
+/* Action Sheet */
+.as-overlay {
+  position: fixed; inset: 0; z-index: 9999;
+  background: rgba(0,0,0,.35); backdrop-filter: blur(2px);
+  display: flex; align-items: flex-end; justify-content: center;
+  opacity: 0; pointer-events: none; transition: opacity .25s;
+}
+.as-overlay.show { opacity: 1; pointer-events: auto; }
+.as-sheet {
+  width: 100%; max-width: 420px;
+  padding: 0 8px 34px;
+  transform: translateY(100%); transition: transform .3s cubic-bezier(.22,1,.36,1);
+}
+.as-overlay.show .as-sheet { transform: translateY(0); }
+.as-group {
+  background: rgba(255,255,255,.88); backdrop-filter: blur(20px);
+  border-radius: 14px; overflow: hidden; margin-bottom: 8px;
+}
+.as-group .as-item {
+  display: flex; align-items: center; justify-content: center; gap: 8px;
+  padding: 16px; font-size: 18px; color: #007aff; font-weight: 500;
+  border: none; background: none; width: 100%; cursor: pointer;
+  -webkit-tap-highlight-color: transparent;
+}
+.as-group .as-item + .as-item { border-top: .5px solid rgba(0,0,0,.12); }
+.as-group .as-item:active { background: rgba(0,0,0,.06); }
+.as-cancel { font-weight: 600; }
+
+/* Details — default open */
+.details {
+  margin-top: 10px; padding-top: 10px;
+  border-top: .5px solid var(--separator);
+  font-size: 13px; color: var(--text-secondary); line-height: 1.6;
+}
+.details.closed { display: none; }
+
+/* ── Overview day list ── */
+.day-list .card { margin-bottom: 8px; }
+.day-list .card .dot { display: inline-block; width: 8px; height: 8px; border-radius: 50%; margin-right: 6px; }
+
+/* ── Payment summary ── */
+.pay-summary { background: var(--bg-elevated); border-radius: var(--radius-md); padding: 14px 16px; box-shadow: var(--shadow-sm); font-size: 13px; line-height: 1.7; margin-bottom: 10px; }
+.pay-summary h4 { font-size: 14px; font-weight: 700; margin-bottom: 4px; }
+.pay-summary .warn { color: var(--tint-red); }
+.pay-summary .ok-text { color: var(--tint-green); }
+
+/* ── Legend ── */
+.legend { display: flex; gap: 14px; flex-wrap: wrap; padding: 8px 0; font-size: 12px; color: var(--text-secondary); }
+.legend-item { display: flex; align-items: center; gap: 5px; }
+.legend-dot { width: 8px; height: 8px; border-radius: 50%; }
+
+/* ── Leaflet overrides ── */
+.leaflet-popup-content-wrapper { border-radius: var(--radius-md) !important; box-shadow: var(--shadow-lg) !important; font-family: -apple-system, BlinkMacSystemFont, "SF Pro Text", sans-serif !important; }
+.leaflet-popup-content { font-size: 14px !important; line-height: 1.5 !important; margin: 12px 14px !important; }
+.leaflet-popup-content a { color: var(--accent) !important; }
+.leaflet-popup-tip { background: #fff !important; }
+.leaflet-control-zoom a { width: 34px !important; height: 34px !important; line-height: 34px !important; font-size: 16px !important; border-radius: 10px !important; background: rgba(255,255,255,.85) !important; -webkit-backdrop-filter: blur(10px) !important; backdrop-filter: blur(10px) !important; border: .5px solid var(--separator) !important; color: var(--text-primary) !important; }
+.leaflet-control-zoom { border-radius: 12px !important; overflow: hidden; box-shadow: var(--shadow-md) !important; border: none !important; }
+.leaflet-control-attribution { font-size: 9px !important; opacity: .5; }
+</style>
+</head>
+<body>
+
+<div id="map"></div>
+<div class="tabs" id="tabs"></div>
+<div class="content" id="content"></div>
+
+<script>
+// ╔══════════════════════════════════════════════════════════════╗
+// ║  REPLACE THIS SECTION — Hotel and Days data                 ║
+// ╚══════════════════════════════════════════════════════════════╝
+
+const HOTEL = {
+  "name": "相铁 FRESA INN 东京东阳町站前",
+  "lat": 35.66962,
+  "lng": 139.81775,
+  "address": "東京都江東区東陽4-4-3",
+  "mapName": "相鉄フレッサイン 東京東陽町駅前",
+  "stay": "1/12–1/16 · 4 晚",
+  "hours": "15:00 入住 · 11:00 退房",
+  "links": [
+    {
+      "label": "酒店官网",
+      "url": "https://www.sotetsu-hotels.com/fresa-inn/toyocho/"
+    },
+    {
+      "label": "寄存说明",
+      "url": "https://sotetsu-hotels.com/fresa-inn/toyocho/faq/"
+    }
+  ],
+  "osaka": {
+    "name": "住一难波南 2",
+    "lat": 34.65542,
+    "lng": 135.4967,
+    "address": "大阪府大阪市浪速区大国1-2-22",
+    "mapName": "Apartment Hotel 11 Namba Minami 2",
+    "stay": "1/17–1/21 · 4 晚",
+    "hours": "16:00 自助入住 · 10:00 退房",
+    "links": [
+      {
+        "label": "公寓入住说明",
+        "url": "https://apt11.jp/en/stays/1ac071f8-2a1f-49c2-afff-388e26b0574c"
+      }
+    ]
+  }
+};
+
+const DAYS = [
+  {
+    "id": 0,
+    "label": "总览",
+    "color": "#0071e3",
+    "locations": []
+  },
+  {
+    "id": 1,
+    "label": "1/12 银座",
+    "date": "1/12 周二",
+    "title": "成田落地，银座散步",
+    "summary": "成田 → 东阳町放行李 → 银座",
+    "route": "成田搭京成 Access Express，选直通都营浅草线并停日本桥的班次，再换东京 Metro 东西线到东阳町。若从 T3 抵达，按指示去 T2·3 铁路站。落地后预留入境、取行李和交通时间。",
+    "color": "#af52de",
+    "locations": [
+      {
+        "time": "13:00 抵达",
+        "name": "成田国际机场",
+        "lat": 35.772,
+        "lng": 140.3929,
+        "type": "transport",
+        "desc": "按机票核对航站楼。出关后找京成线，按当日导航核对车次。",
+        "detail": "\u003ca href=\"https://new-www.keisei.co.jp/keisei/tetudou/skyliner/us/traffic/express.php\" target=\"_blank\" rel=\"noopener noreferrer\">京成直通线路\u003c/a> · \u003ca href=\"https://www.narita-airport.jp/en/access/train/\" target=\"_blank\" rel=\"noopener noreferrer\">成田机场接驳\u003c/a>",
+        "gmap": "Narita%20International%20Airport"
+      },
+      {
+        "time": "约 16:00",
+        "name": "相铁 FRESA INN 东京东阳町站前",
+        "lat": 35.66962,
+        "lng": 139.81775,
+        "type": "hotel",
+        "desc": "东阳町站 5 号出口旁，带箱子可按站内电梯标识走。登记后轻装去银座。",
+        "detail": "\u003ca href=\"https://www.sotetsu-hotels.com/fresa-inn/toyocho/\" target=\"_blank\" rel=\"noopener noreferrer\">酒店官网\u003c/a> · \u003ca href=\"https://sotetsu-hotels.com/fresa-inn/toyocho/faq/\" target=\"_blank\" rel=\"noopener noreferrer\">寄存说明\u003c/a>",
+        "gmap": "%E7%9B%B8%E9%89%84%E3%83%95%E3%83%AC%E3%83%83%E3%82%B5%E3%82%A4%E3%83%B3%20%E6%9D%B1%E4%BA%AC%E6%9D%B1%E9%99%BD%E7%94%BA%E9%A7%85%E5%89%8D%20%E6%9D%B1%E4%BA%AC%E9%83%BD%E6%B1%9F%E6%9D%B1%E5%8C%BA%E6%9D%B1%E9%99%BD4-4-3",
+        "pay": {
+          "card": 1,
+          "alipay": 1,
+          "wechat": 1,
+          "cash": 0
+        }
+      },
+      {
+        "time": "17:30 后",
+        "name": "GINZA SIX 与银座中央通",
+        "lat": 35.6697,
+        "lng": 139.7641,
+        "type": "spot",
+        "desc": "放好行李后逛一段中央通。到酒店较晚的话，就在东阳町吃饭。",
+        "detail": "\u003ca href=\"https://ginza6.tokyo/types/restaurants/\" target=\"_blank\" rel=\"noopener noreferrer\">商场餐厅\u003c/a>",
+        "gmap": "GINZA%20SIX%20%E9%8A%80%E5%BA%A7"
+      },
+      {
+        "time": "18:00–19:30",
+        "name": "银座篝 本店",
+        "lat": 35.66927,
+        "lng": 139.7627,
+        "type": "food",
+        "desc": "鸡白汤拉面。四人想一起入座，见队伍长就去 GINZA SIX 6 楼看银座真田或同层餐厅。",
+        "detail": "小红书作者 ConnieMOL 记了一次工作日晚间约半小时的等候。读取到 3 条评论，未补足本店的排队数据。",
+        "gmap": "%E9%8A%80%E5%BA%A7%20%E7%AF%9D%20%E6%9C%AC%E5%BA%97",
+        "xhs": "https://www.xiaohongshu.com/explore/6afbc2ba0000000022038a2e?xsec_token=ABynHbmI41ncM9o2YD7BMqkMXIyRAgi_PJv6aUy8P9P_Q=&xsec_source=pc_feed",
+        "xhsKeyword": "银座篝 本店 鸡白汤 ConnieMOL",
+        "xhsTitle": "东京| 銀座 篝 Ginza Kagari米其林拉面"
+      }
+    ]
+  },
+  {
+    "id": 2,
+    "label": "1/13 东京迪士尼",
+    "date": "1/13 周三",
+    "title": "东京迪士尼一日游",
+    "summary": "舞滨 → DisneySea · Disneyland 可二选一",
+    "route": "东阳町 → 茅场町换日比谷线 → 八丁堀换 JR 京叶线至舞滨。去 DisneySea 再搭迪士尼度假区线，去 Disneyland 可从舞滨步行。建议 07:15–07:40 左右出酒店，实际以电车和安检为准。",
+    "color": "#ff9500",
+    "locations": [
+      {
+        "time": "08:15 左右",
+        "name": "JR 舞滨站",
+        "lat": 35.6361,
+        "lng": 139.8832,
+        "type": "transport",
+        "desc": "带齐 4 张票的二维码。站外便利店解决早餐，随后去选定园区。",
+        "detail": "",
+        "gmap": "%E8%88%9E%E6%B5%9C%E9%A7%85%20JR"
+      },
+      {
+        "time": "09:00–傍晚",
+        "name": "东京迪士尼海洋",
+        "lat": 35.62683,
+        "lng": 139.88792,
+        "type": "spot",
+        "desc": "暂按 DisneySea。先选各自最在意的两个项目，可从 Fantasy Springs 和 Soaring 里挑。入园后检查排队、付费预约和开放状态。",
+        "detail": "官方日历列 09:00–21:00，成人票 ¥9,900。港湾夜秀《Believe! Sea of Dreams》停演，可按体力到傍晚或留到闭园。Klook 若已买票，核对日期、园区和入园方式。\n\u003ca href=\"https://www.tokyodisneyresort.jp/ticket/index.html\" target=\"_blank\" rel=\"noopener noreferrer\">官方购票\u003c/a> · \u003ca href=\"https://www.tokyodisneyresort.jp/tdr/calendar/202701/\" target=\"_blank\" rel=\"noopener noreferrer\">官方日历\u003c/a> · \u003ca href=\"https://www.tokyodisneyresort.jp/en/tds/show/detail/967/\" target=\"_blank\" rel=\"noopener noreferrer\">夜秀停演\u003c/a>",
+        "gmap": "Tokyo%20DisneySea%20Main%20Entrance",
+        "reserve": "https://www.tokyodisneyresort.jp/ticket/index.html"
+      },
+      {
+        "time": "11:30 或 13:30",
+        "name": "Dockside Diner",
+        "lat": 35.62453,
+        "lng": 139.88633,
+        "type": "food",
+        "desc": "美国海滨吃简餐，也可去阿拉伯海岸 Casbah Food Court 吃咖喱。入园后查看 Mobile Order 的可取餐时段，晚饭沿当前园区解决。",
+        "detail": "\u003ca href=\"https://www.tokyodisneyresort.jp/en/tds/restaurant/list/\" target=\"_blank\" rel=\"noopener noreferrer\">园内餐厅\u003c/a>",
+        "gmap": "Dockside%20Diner%20Tokyo%20DisneySea"
+      },
+      {
+        "time": "—",
+        "name": "东京迪士尼乐园",
+        "lat": 35.63446,
+        "lng": 139.88083,
+        "type": "spot",
+        "desc": "更想玩美女与野兽或看米妮主题游行，就把这一天整天换成 Disneyland，购票选对园区。",
+        "detail": "备选园区\n\u003ca href=\"https://www.tokyodisneyresort.jp/tdr/calendar/202701/\" target=\"_blank\" rel=\"noopener noreferrer\">两园官方日历\u003c/a>",
+        "gmap": "Tokyo%20Disneyland%20Main%20Entrance"
+      }
+    ]
+  },
+  {
+    "id": 3,
+    "label": "1/14 镰仓",
+    "date": "1/14 周四",
+    "title": "镰仓 · 长谷到小町通",
+    "summary": "长谷寺、大佛 → 由比滨午餐 → 小町通",
+    "route": "东阳町 → 大手町，步行接 JR 东京站 → 横须贺线到镰仓 → 江之电到长谷。把寺院排上午，午后从由比滨或长谷搭江之电回镰仓站。",
+    "color": "#34c759",
+    "locations": [
+      {
+        "time": "09:30–10:30",
+        "name": "镰仓长谷寺",
+        "lat": 35.3129,
+        "lng": 139.53104,
+        "type": "spot",
+        "desc": "先看庭院和观景台。风雨大就压缩户外，在长谷找咖啡或从镰仓站早点回东京。",
+        "detail": "\u003ca href=\"https://visit.trip-kamakura.com/wp/wp-content/uploads/2025/01/touristmap_english_2024.pdf\" target=\"_blank\" rel=\"noopener noreferrer\">镰仓观光图\u003c/a>",
+        "gmap": "%E9%8E%8C%E5%80%89%20%E9%95%B7%E8%B0%B7%E5%AF%BA"
+      },
+      {
+        "time": "10:45–11:30",
+        "name": "高德院 · 镰仓大佛",
+        "lat": 35.31672,
+        "lng": 139.53573,
+        "type": "spot",
+        "desc": "从长谷寺步行过去，冬季日短，上午一起看完。",
+        "detail": "",
+        "gmap": "%E9%AB%98%E5%BE%B3%E9%99%A2%20%E9%8E%8C%E5%80%89%E5%A4%A7%E4%BB%8F"
+      },
+      {
+        "time": "12:00–13:15",
+        "name": "镰仓松原庵 本店",
+        "lat": 35.31031,
+        "lng": 139.53907,
+        "type": "food",
+        "desc": "由比滨吃荞麦面。四人若需要等太久，改长谷站附近定食，或去小町通吃午餐。",
+        "detail": "小红书作者 Joo. 点了鸭肉荞麦面和青柠冷荞麦面，提到店里有庭院。记录来自晚餐，评论样本为空，午餐等位以现场为准。\n\u003ca href=\"https://matsubara-an.com/shops/kamakura.php\" target=\"_blank\" rel=\"noopener noreferrer\">店家菜单与交通\u003c/a>",
+        "gmap": "%E9%8E%8C%E5%80%89%20%E6%9D%BE%E5%8E%9F%E5%BA%B5%20%E6%9C%AC%E5%BA%97%20%E7%94%B1%E6%AF%94%E3%82%AC%E6%B5%9C",
+        "xhs": "https://www.xiaohongshu.com/explore/67bad22000000000290173bb?xsec_token=ABQ40daPR8Qae9lZIt5aklkWBeiAriR5q0SLTkCrWQPys=&xsec_source=pc_search",
+        "xhsKeyword": "镰仓 松原庵 由比滨 本店 荞麦面",
+        "xhsTitle": "来东京镰仓一定不要错过这家荞麦面定食‼️🍜"
+      },
+      {
+        "time": "14:00–16:00",
+        "name": "小町通与鹤冈八幡宫",
+        "lat": 35.32262,
+        "lng": 139.55219,
+        "type": "spot",
+        "desc": "从镰仓站走小町通，脚力够再到八幡宫。晚饭回东阳町找定食或超市熟食。",
+        "detail": "\u003ca href=\"https://visit.trip-kamakura.com/wp/wp-content/uploads/2025/01/touristmap_english_2024.pdf\" target=\"_blank\" rel=\"noopener noreferrer\">镰仓观光图\u003c/a>",
+        "gmap": "%E9%B6%B4%E5%B2%A1%E5%85%AB%E5%B9%A1%E5%AE%AE"
+      }
+    ]
+  },
+  {
+    "id": 4,
+    "label": "1/15 河口湖",
+    "date": "1/15 周五",
+    "title": "河口湖看富士山",
+    "summary": "新宿往返 · 晴天去北岸，云厚留东京",
+    "route": "东阳町 → 大手町换丸之内线到新宿 → Busta 新宿高速巴士到河口湖站，官方行车参考约 1 小时 45 分。到站换红线公交去大石公园。回程前至少留 30 分钟在河口湖站集合。",
+    "color": "#007aff",
+    "locations": [
+      {
+        "time": "约 08:00–09:00 发车",
+        "name": "Busta 新宿",
+        "lat": 35.68866,
+        "lng": 139.70054,
+        "type": "transport",
+        "desc": "查四张往返票，选 15:30–16:30 左右的返程时段。若前一晚云量高或运行有变，按退改条件处理。",
+        "detail": "\u003ca href=\"https://highway-buses.jp/chs/course/kawaguchiko.php\" target=\"_blank\" rel=\"noopener noreferrer\">河口湖线路与订票\u003c/a>",
+        "gmap": "%E3%83%90%E3%82%B9%E3%82%BF%E6%96%B0%E5%AE%BF",
+        "reserve": "https://highway-buses.jp/chs/course/kawaguchiko.php"
+      },
+      {
+        "time": "约 10:30–12:00",
+        "name": "大石公园 · 河口湖北岸",
+        "lat": 35.52213,
+        "lng": 138.74583,
+        "type": "spot",
+        "desc": "晴天抵达后直奔北岸。红线坐到河口湖自然生活馆，湖边吹风明显，穿防风外层。",
+        "detail": "\u003ca href=\"https://en.kawaguchiko.net/bus-stop-en/kawaguchiko-shizen-seikatsu-kan/\" target=\"_blank\" rel=\"noopener noreferrer\">红线站点\u003c/a> · \u003ca href=\"https://live.fujigoko.tv/\" target=\"_blank\" rel=\"noopener noreferrer\">实时能见度\u003c/a>",
+        "gmap": "%E5%A4%A7%E7%9F%B3%E5%85%AC%E5%9C%92%20%E6%B2%B3%E5%8F%A3%E6%B9%96"
+      },
+      {
+        "time": "约 12:45–14:00",
+        "name": "ほうとう不動 河口湖駅前店",
+        "lat": 35.49866,
+        "lng": 138.76936,
+        "type": "food",
+        "desc": "车站附近吃山梨特色馎饦面。排队拖到返程集合时间，就在站前吃定食或买便当。",
+        "detail": "",
+        "gmap": "%E3%81%BB%E3%81%86%E3%81%A8%E3%81%86%E4%B8%8D%E5%8B%95%20%E6%B2%B3%E5%8F%A3%E6%B9%96%E9%A7%85%E5%89%8D%E5%BA%97",
+        "xhsKeyword": "河口湖 ほうとう不動 河口湖駅前店 馎饦"
+      },
+      {
+        "time": "约 15:30–16:30",
+        "name": "河口湖站 · 回程",
+        "lat": 35.4984,
+        "lng": 138.76874,
+        "type": "transport",
+        "desc": "按车票上的乘车口和时间提前到站。回到新宿后在车站餐饮层吃晚饭，或回东阳町。",
+        "detail": "",
+        "gmap": "%E6%B2%B3%E5%8F%A3%E6%B9%96%E9%A7%85"
+      },
+      {
+        "time": "—",
+        "name": "浅草寺与仲见世",
+        "lat": 35.71477,
+        "lng": 139.79666,
+        "type": "spot",
+        "desc": "若富士山被云遮或巴士停驶，当天留东京。上午浅草寺和仲见世，雨大就去晴空塔下 Solamachi 室内逛店、吃饭。",
+        "detail": "低能见度备选",
+        "gmap": "%E6%B5%85%E8%8D%89%E5%AF%BA%20%E6%9D%B1%E4%BA%AC"
+      }
+    ]
+  },
+  {
+    "id": 5,
+    "label": "1/16 新宿 · 夜巴",
+    "date": "1/16 周六",
+    "title": "新宿半日，晚上暂定夜巴",
+    "summary": "11:00 前退房 → 新宿 → 夜巴暂定",
+    "route": "11:00 前东阳町退房，当天可先寄存，再乘东西线到大手町换丸之内线去新宿。若打算在新宿就近寄存，先确认有能装下四人行李的寄存点，并记录取件截止时间。",
+    "color": "#86868b",
+    "locations": [
+      {
+        "time": "11:00 前",
+        "name": "相铁 FRESA INN 东京东阳町站前",
+        "lat": 35.66962,
+        "lng": 139.81775,
+        "type": "hotel",
+        "desc": "退房。使用酒店寄存的话，预留回东阳町拿箱子再进新宿的往返时间。",
+        "detail": "\u003ca href=\"https://www.sotetsu-hotels.com/fresa-inn/toyocho/\" target=\"_blank\" rel=\"noopener noreferrer\">酒店官网\u003c/a> · \u003ca href=\"https://sotetsu-hotels.com/fresa-inn/toyocho/faq/\" target=\"_blank\" rel=\"noopener noreferrer\">寄存说明\u003c/a>",
+        "gmap": "%E7%9B%B8%E9%89%84%E3%83%95%E3%83%AC%E3%83%83%E3%82%B5%E3%82%A4%E3%83%B3%20%E6%9D%B1%E4%BA%AC%E6%9D%B1%E9%99%BD%E7%94%BA%E9%A7%85%E5%89%8D%20%E6%9D%B1%E4%BA%AC%E9%83%BD%E6%B1%9F%E6%9D%B1%E5%8C%BA%E6%9D%B1%E9%99%BD4-4-3",
+        "pay": {
+          "card": 1,
+          "alipay": 1,
+          "wechat": 1,
+          "cash": 0
+        }
+      },
+      {
+        "time": "12:00–16:00",
+        "name": "新宿三丁目",
+        "lat": 35.69084,
+        "lng": 139.70403,
+        "type": "spot",
+        "desc": "中午在伊势丹新宿店餐饮层吃饭，备选为新宿站附近定食。天气好步行到新宿御苑，16:00 前入园；下雨就在伊势丹和新宿站周边逛。",
+        "detail": "\u003ca href=\"https://policies.env.go.jp/national-garden/shinjukugyoen/guide/information/index.html\" target=\"_blank\" rel=\"noopener noreferrer\">新宿御苑开放时间\u003c/a>",
+        "gmap": "%E4%BC%8A%E5%8B%A2%E4%B8%B9%20%E6%96%B0%E5%AE%BF%E5%BA%97"
+      },
+      {
+        "time": "18:00–20:00",
+        "name": "NEWoMan 新宿 · 晚饭与补给",
+        "lat": 35.6889,
+        "lng": 139.70135,
+        "type": "food",
+        "desc": "JR 新宿新南口附近吃晚饭，备选为南口定食或便当。上车前取齐箱子、买水、准备充电线和耳塞。",
+        "detail": "",
+        "gmap": "NEWoMan%20%E6%96%B0%E5%AE%BF"
+      },
+      {
+        "time": "22:20 参考时刻",
+        "name": "Busta 新宿 4F · 夜间巴士",
+        "lat": 35.68866,
+        "lng": 139.70054,
+        "type": "transport",
+        "desc": "候选近铁ツィンクル号，常规新宿 22:20 发车，次日难波 OCAT 07:08 到。建议发车前 30 分钟到站。",
+        "detail": "优先比较三列独立座、厕所、四个座位及大箱尺寸。近铁增开的部分车辆可能从新宿西口 26 号站台出发，订票后按订单核对乘车点。\n\u003ca href=\"https://www.kintetsu-bus.co.jp/highway/routelist/24\" target=\"_blank\" rel=\"noopener noreferrer\">近铁线路与订票\u003c/a> · \u003ca href=\"https://willer-travel.com/en/bus_search/tokyo/all/osaka/umeda/\" target=\"_blank\" rel=\"noopener noreferrer\">WILLER 查替代车次\u003c/a>",
+        "gmap": "%E3%83%90%E3%82%B9%E3%82%BF%E6%96%B0%E5%AE%BF",
+        "reserve": "https://www.kintetsu-bus.co.jp/highway/routelist/24"
+      },
+      {
+        "time": "—",
+        "name": "JR 东京站 · 次晨新干线",
+        "lat": 35.68124,
+        "lng": 139.76713,
+        "type": "transport",
+        "desc": "改乘 1/17 上午东京 → 新大阪，先补订 1/16 东京一晚。大阪 1/17 下午到公寓，心斋桥缩成傍晚一段。",
+        "detail": "夜巴替换方案\n\u003ca href=\"https://smart-ex.jp/en/\" target=\"_blank\" rel=\"noopener noreferrer\">Smart EX 查询\u003c/a> · \u003ca href=\"https://smart-ex.jp/en/entraining/oversized-baggage/\" target=\"_blank\" rel=\"noopener noreferrer\">大件行李规定\u003c/a>",
+        "gmap": "%E6%9D%B1%E4%BA%AC%E9%A7%85%20%E6%9D%B1%E6%B5%B7%E9%81%93%E6%96%B0%E5%B9%B9%E7%B7%9A"
+      }
+    ]
+  },
+  {
+    "id": 6,
+    "label": "1/17 难波 · 心斋桥",
+    "date": "1/17 周日",
+    "title": "大阪落地，心斋桥和道顿堀",
+    "summary": "难波 OCAT → 寄存和早饭 → 16:00 入住",
+    "route": "按难波 OCAT 下车设计。若实际在东梅田下车，先在到站附近吃早餐或乘地铁去难波再寄存。公寓 16:00 开放入住信息，提前完成线上登记。公寓的提前寄存需向房东确认。",
+    "color": "#ff9500",
+    "locations": [
+      {
+        "time": "约 07:00–08:30",
+        "name": "难波 OCAT · 到站与寄存",
+        "lat": 34.66577,
+        "lng": 135.49513,
+        "type": "transport",
+        "desc": "先看 OCAT 一楼或难波站的大件柜。四个箱子难找到连续空柜时，可提前预订人工寄存并核对营业时间。",
+        "detail": "\u003ca href=\"https://www.ocat.co.jp/enjoyocat/\" target=\"_blank\" rel=\"noopener noreferrer\">OCAT 寄存信息\u003c/a>",
+        "gmap": "OCAT%20%E9%9B%A3%E6%B3%A2"
+      },
+      {
+        "time": "10:00–15:00",
+        "name": "心斋桥筋商店街",
+        "lat": 34.67279,
+        "lng": 135.50134,
+        "type": "spot",
+        "desc": "难波站周边先吃早饭，商店开门后慢逛心斋桥，午餐可在大丸心斋桥餐饮层或难波 Walk 解决。很累就吃完午饭去咖啡店休息。",
+        "detail": "\u003ca href=\"https://osaka-info.jp/experience/en/osaka/spot/210\" target=\"_blank\" rel=\"noopener noreferrer\">大阪观光局\u003c/a>",
+        "gmap": "%E5%BF%83%E6%96%8E%E6%A9%8B%E7%AD%8B%E5%95%86%E5%BA%97%E8%A1%97"
+      },
+      {
+        "time": "16:00 后",
+        "name": "住一难波南 2",
+        "lat": 34.65542,
+        "lng": 135.4967,
+        "type": "hotel",
+        "desc": "取回箱子后去大国町。进入房间后休息一小时再出门。若 1/14 左右收到入住链接，提前登记好。",
+        "detail": "\u003ca href=\"https://apt11.jp/en/stays/1ac071f8-2a1f-49c2-afff-388e26b0574c\" target=\"_blank\" rel=\"noopener noreferrer\">公寓入住说明\u003c/a>",
+        "gmap": "Apartment%20Hotel%2011%20Namba%20Minami%202%20%E5%A4%A7%E9%98%AA%E5%BA%9C%E5%A4%A7%E9%98%AA%E5%B8%82%E6%B5%AA%E9%80%9F%E5%8C%BA%E5%A4%A7%E5%9B%BD1-2-22"
+      },
+      {
+        "time": "18:00 左右",
+        "name": "道顿堀 · 美津の",
+        "lat": 34.66842,
+        "lng": 135.5032,
+        "type": "food",
+        "desc": "戎桥看格力高招牌后吃大阪烧。四人优先选同街可预约的千房，想排再试美津の。",
+        "detail": "小红书作者 Kevin 记录一次晚餐等了接近一小时，笔记下未读到评论。大众点评公开相册可确认商户地址，现场等位时间看当天。\n\u003ca href=\"https://shop.chibo.com/detail/28/\" target=\"_blank\" rel=\"noopener noreferrer\">千房预约与菜单\u003c/a>",
+        "gmap": "%E3%81%8A%E5%A5%BD%E3%81%BF%E7%84%BC%20%E7%BE%8E%E6%B4%A5%E3%81%AE%20%E9%81%93%E9%A0%93%E5%A0%80",
+        "reserve": "https://shop.chibo.com/detail/28/",
+        "xhs": "https://www.xiaohongshu.com/explore/6a1ad787000000003700f5d8?xsec_token=AB8LJLm3OtvAIvssq3CQmYubIHVVzFI95ndEhDTq5OdiU=&xsec_source=pc_search",
+        "xhsKeyword": "大阪 道顿堀 美津の Kevin 大阪烧",
+        "dianping": "https://www.dianping.com/shop/8268772/photos/album/p5",
+        "dianpingKeyword": "お好み焼 美津の 道頓堀",
+        "xhsTitle": "Okonomiyaki Mizuno 美津の"
+      }
+    ]
+  },
+  {
+    "id": 7,
+    "label": "1/18 USJ",
+    "date": "1/18 周一",
+    "title": "大阪环球影城一日",
+    "summary": "环球城 → 任天堂、哈利波特按票券和体力选",
+    "route": "大国町坐御堂筋线到梅田，步行接 JR 大阪站 → 西九条换 JR 梦咲线至 Universal City。按官方公布的当天开园时间倒推，建议提前 45–60 分钟到园门，铁路另留换乘时间。",
+    "color": "#ff3b30",
+    "locations": [
+      {
+        "time": "开园前",
+        "name": "Universal City 站",
+        "lat": 34.66774,
+        "lng": 135.43871,
+        "type": "transport",
+        "desc": "早上在住宿附近吃好或买好早餐，四人手机离线存好入场二维码。",
+        "detail": "",
+        "gmap": "Universal%20City%20Station%20Osaka"
+      },
+      {
+        "time": "全天",
+        "name": "日本环球影城 USJ",
+        "lat": 34.66627,
+        "lng": 135.43313,
+        "type": "spot",
+        "desc": "四张 Studio Pass 先录入同一台手机的官方 App。入园后根据当日规则领任天堂区整理券，有带时段快通则记清时段，再排哈利波特等想玩的项目。",
+        "detail": "当天营业时间和停运项目出发前再查官网。Express Pass 与入园票分开，留意每套的项目和园区覆盖。\n\u003ca href=\"https://www.usj.co.jp/web/en/us/tickets\" target=\"_blank\" rel=\"noopener noreferrer\">购票\u003c/a> · \u003ca href=\"https://www.usj.co.jp/web/ja/jp/park-guide/schedule/park-hour/\" target=\"_blank\" rel=\"noopener noreferrer\">每日营业时间\u003c/a> · \u003ca href=\"https://www.usj.co.jp/web/ja/jp/enjoy/numbered-ticket/timed-entry-ticket\" target=\"_blank\" rel=\"noopener noreferrer\">任天堂整理券\u003c/a>",
+        "gmap": "Universal%20Studios%20Japan%20Main%20Gate",
+        "reserve": "https://www.usj.co.jp/web/en/us/tickets"
+      },
+      {
+        "time": "11:00 左右或 13:30 后",
+        "name": "Mel’s Drive-In",
+        "lat": 34.66482,
+        "lng": 135.43251,
+        "type": "food",
+        "desc": "顺路吃汉堡，哈利波特区的三把扫帚作为备选。晚饭离园后去 CityWalk 的章鱼烧街或普通定食。",
+        "detail": "\u003ca href=\"https://www.usj.co.jp/web/en/us/restaurants/mobile-order\" target=\"_blank\" rel=\"noopener noreferrer\">园内支持手机点餐的餐厅\u003c/a>",
+        "gmap": "Mel%E2%80%99s%20Drive-In%20Universal%20Studios%20Japan"
+      }
+    ]
+  },
+  {
+    "id": 8,
+    "label": "1/19 京都东山",
+    "date": "1/19 周二",
+    "title": "京都 · 清水寺到祇园",
+    "summary": "清水寺 → 二三年坂 → 八坂神社 → 四条河原町",
+    "route": "大国町 → 御堂筋线到淀屋桥 → 京阪电车到清水五条（乘特急时按导航换停靠清水五条的车）→ 步行约 25 分钟上坡去清水寺。返程从祇园四条乘京阪回淀屋桥，再回大国町。",
+    "color": "#34c759",
+    "locations": [
+      {
+        "time": "09:45–11:00",
+        "name": "清水寺",
+        "lat": 34.99478,
+        "lng": 135.7849,
+        "type": "spot",
+        "desc": "尽量上午到，先看清水舞台，再沿石板坡往祇园慢慢走。若路面结冰，把上下坡行程压短。",
+        "detail": "\u003ca href=\"https://kyoto.travel/en/itineraries/higashiyama-at-dawn/\" target=\"_blank\" rel=\"noopener noreferrer\">东山步行路线\u003c/a> · \u003ca href=\"https://www.kiyomizudera.or.jp/en/visit/\" target=\"_blank\" rel=\"noopener noreferrer\">清水寺参观说明\u003c/a>",
+        "gmap": "%E6%B8%85%E6%B0%B4%E5%AF%BA%20%E4%BA%AC%E9%83%BD"
+      },
+      {
+        "time": "11:00–12:00",
+        "name": "三年坂、二年坂和八坂塔",
+        "lat": 34.99847,
+        "lng": 135.78086,
+        "type": "spot",
+        "desc": "小店开了再逛，八坂塔看外景。大雨可以直接坐车去四条河原町。",
+        "detail": "",
+        "gmap": "%E5%85%AB%E5%9D%82%E3%81%AE%E5%A1%94%20%E6%B3%95%E8%A6%B3%E5%AF%BA"
+      },
+      {
+        "time": "12:00 左右",
+        "name": "八坂神社",
+        "lat": 35.00366,
+        "lng": 135.77852,
+        "type": "spot",
+        "desc": "走过石板坡后进八坂神社，从西楼门下到四条通。",
+        "detail": "",
+        "gmap": "%E5%85%AB%E5%9D%82%E7%A5%9E%E7%A4%BE%20%E4%BA%AC%E9%83%BD"
+      },
+      {
+        "time": "12:45–14:00",
+        "name": "祇园午餐 · 四条通",
+        "lat": 35.00342,
+        "lng": 135.7756,
+        "type": "food",
+        "desc": "想吃咖喱乌冬可看祇园 おかる 当天午间营业。若等位久，就过桥去四条河原町高岛屋餐厅层。",
+        "detail": "",
+        "gmap": "%E7%A5%87%E5%9C%92%20%E3%81%8A%E3%81%8B%E3%82%8B%20%E4%BA%AC%E9%83%BD",
+        "xhsKeyword": "京都 祇园 おかる 咖喱乌冬"
+      },
+      {
+        "time": "14:00–16:30",
+        "name": "京都河原町",
+        "lat": 35.00378,
+        "lng": 135.76972,
+        "type": "spot",
+        "desc": "在河原町喝茶或买伴手礼。晚饭四条吃简餐，或回难波再吃。",
+        "detail": "",
+        "gmap": "%E4%BA%AC%E9%83%BD%E6%B2%B3%E5%8E%9F%E7%94%BA%E9%A7%85"
+      },
+      {
+        "time": "—",
+        "name": "有喜屋 清水吉晴庵",
+        "type": "food",
+        "lat": 34.99642,
+        "lng": 135.78198,
+        "desc": "清水寺走下来还在三年坂时，可在青龙苑吃手打荞麦面。店家每月有两个周二不定休，1/19 当天开门再去。",
+        "detail": "\u003ca href=\"https://ukiya.nibal.site/shop/kiyomizu/\" target=\"_blank\" rel=\"noopener noreferrer\">店家营业与菜单\u003c/a>",
+        "gmap": "%E6%9C%89%E5%96%9C%E5%B1%8B%20%E6%B8%85%E6%B0%B4%E5%90%89%E6%99%B4%E5%BA%B5%20%E4%BA%AC%E9%83%BD%20%E6%B8%85%E6%B0%B43-334",
+        "dianping": "https://m.dianping.com/shop/8111037"
+      }
+    ]
+  },
+  {
+    "id": 9,
+    "label": "1/20 梅田购物",
+    "date": "1/20 周三",
+    "title": "梅田购物与整理行李",
+    "summary": "大阪站连通商场 · 白天买齐，晚上回公寓装箱",
+    "route": "大国町搭御堂筋线直达梅田。按购物类别挑两座商场即可。百货集中在车站周边，下雨也容易用地下通道衔接。",
+    "color": "#af52de",
+    "locations": [
+      {
+        "time": "10:30–12:15",
+        "name": "Grand Front Osaka",
+        "lat": 34.70543,
+        "lng": 135.49492,
+        "type": "spot",
+        "desc": "大阪站北口，优先逛服饰和生活方式店。电子产品需求高时可换成旁边的 Yodobashi / LINKS UMEDA。",
+        "detail": "\u003ca href=\"https://www.grandfront-osaka.jp/\" target=\"_blank\" rel=\"noopener noreferrer\">商场与店铺\u003c/a>",
+        "gmap": "%E3%82%B0%E3%83%A9%E3%83%B3%E3%83%95%E3%83%AD%E3%83%B3%E3%83%88%E5%A4%A7%E9%98%AA"
+      },
+      {
+        "time": "12:15–13:45",
+        "name": "LUCUA Osaka · B2 餐饮区",
+        "lat": 34.70242,
+        "lng": 135.49602,
+        "type": "food",
+        "desc": "想分开选菜就去 B2 餐饮区，想坐下吃正餐可改 Grand Front 餐厅层。饭后仍在大阪站周边活动。",
+        "detail": "\u003ca href=\"https://www.lucua.jp/en/floormap/b2_en.html\" target=\"_blank\" rel=\"noopener noreferrer\">LUCUA 楼层指南\u003c/a>",
+        "gmap": "LUCUA%20Osaka"
+      },
+      {
+        "time": "14:00–17:30",
+        "name": "阪急梅田本店",
+        "lat": 34.70231,
+        "lng": 135.49817,
+        "type": "spot",
+        "desc": "集中买美妆、伴手礼。市区退税购物在店里登记护照和退款方式，留好商品与收据。晚饭建议同商圈餐饮层或买熟食回公寓。",
+        "detail": "\u003ca href=\"https://www.customs.go.jp/kaigairyoko/taxrefund/C-details.html\" target=\"_blank\" rel=\"noopener noreferrer\">日本海关退税说明\u003c/a>",
+        "gmap": "%E9%98%AA%E6%80%A5%E3%81%86%E3%82%81%E3%81%A0%E6%9C%AC%E5%BA%97"
+      },
+      {
+        "time": "晚饭后",
+        "name": "住一难波南 2",
+        "lat": 34.65542,
+        "lng": 135.4967,
+        "type": "hotel",
+        "desc": "整理行李和小票，把可能要海关抽查的商品集中放好，核对关西机场航站楼。",
+        "detail": "\u003ca href=\"https://apt11.jp/en/stays/1ac071f8-2a1f-49c2-afff-388e26b0574c\" target=\"_blank\" rel=\"noopener noreferrer\">公寓入住说明\u003c/a>",
+        "gmap": "Apartment%20Hotel%2011%20Namba%20Minami%202%20%E5%A4%A7%E9%98%AA%E5%BA%9C%E5%A4%A7%E9%98%AA%E5%B8%82%E6%B5%AA%E9%80%9F%E5%8C%BA%E5%A4%A7%E5%9B%BD1-2-22"
+      }
+    ]
+  },
+  {
+    "id": 10,
+    "label": "1/21 关西机场",
+    "date": "1/21 周四",
+    "title": "退房，去关西机场退税与返程",
+    "summary": "10:00 退房 → 南海难波 → KIX 19:30 起飞",
+    "route": "大国町到难波后跟「南海電車」指示，别走到 JR 难波。南海机场急行约 45 分，Rapi:t 最快约 34 分。关西机场站连通 T1 和 Aeroplaza，去 T2 再搭免费接驳。建议 13:30–14:00 左右从南海难波出发，争取 15:00 左右到对应航站楼。",
+    "color": "#0071e3",
+    "locations": [
+      {
+        "time": "10:00 前",
+        "name": "住一难波南 2",
+        "lat": 34.65542,
+        "lng": 135.4967,
+        "type": "hotel",
+        "desc": "按自助退房指引离开。机场购物清单较长，就直接去南海难波吃早午饭，约 11:00–11:30 上车。",
+        "detail": "\u003ca href=\"https://apt11.jp/en/stays/1ac071f8-2a1f-49c2-afff-388e26b0574c\" target=\"_blank\" rel=\"noopener noreferrer\">公寓入住说明\u003c/a>",
+        "gmap": "Apartment%20Hotel%2011%20Namba%20Minami%202%20%E5%A4%A7%E9%98%AA%E5%BA%9C%E5%A4%A7%E9%98%AA%E5%B8%82%E6%B5%AA%E9%80%9F%E5%8C%BA%E5%A4%A7%E5%9B%BD1-2-22"
+      },
+      {
+        "time": "11:00–13:30",
+        "name": "南海难波站",
+        "lat": 34.66353,
+        "lng": 135.50112,
+        "type": "transport",
+        "desc": "午餐可在难波站商场吃乌冬或定食，也可去机场航站楼的公共区吃。约 13:30–14:00 上车，按车票和实际航站楼留时间。",
+        "detail": "\u003ca href=\"https://www.nankai.co.jp/en_railway/access-timetable\" target=\"_blank\" rel=\"noopener noreferrer\">南海时刻与车种\u003c/a>",
+        "gmap": "%E5%8D%97%E6%B5%B7%E9%9B%A3%E6%B3%A2%E9%A7%85"
+      },
+      {
+        "time": "约 15:00 到航站楼",
+        "name": "关西国际机场",
+        "lat": 34.43625,
+        "lng": 135.2431,
+        "type": "transport",
+        "desc": "按票面去 T1 或 T2。市区退税商品随身带到终端或海关检查点，先完成确认，再把箱子交给航司。过安检后再逛免税和吃简餐。",
+        "detail": "回程 19:30 起飞，21:20 抵达上海。早到可先吃饭和找退税点，值机开放时间看航司。现金或退款到账时间按商家说明。\n\u003ca href=\"https://www.kansai-airport.or.jp/en/access/from-airport/train\" target=\"_blank\" rel=\"noopener noreferrer\">T1/T2 接驳\u003c/a> · \u003ca href=\"https://www.customs.go.jp/kaigairyoko/taxrefund/map_CHECK.htm\" target=\"_blank\" rel=\"noopener noreferrer\">税关确认地点\u003c/a> · \u003ca href=\"https://www.kansai-airport.or.jp/en/shop-and-dine/notices/kixdutyfree\" target=\"_blank\" rel=\"noopener noreferrer\">机场免税店预订\u003c/a>",
+        "gmap": "Kansai%20International%20Airport",
+        "reserve": "https://www.kansai-airport.or.jp/en/shop-and-dine/notices/kixdutyfree"
+      }
+    ]
+  }
+];
+
+// ╔══════════════════════════════════════════════════════════════╗
+// ║  REPLACE THIS SECTION — Overview tab content                ║
+// ╚══════════════════════════════════════════════════════════════╝
+
+function overviewContent() {
+  return `
+<div class="hero"><h1>日本 10 日行程</h1><p class="subtitle">2027 年 1 月 12–21 日 · 4 位成人</p></div>
+<div class="info-grid">
+  <div class="info-card"><div class="label">酒店</div><div class="value">东京东阳町 1/12–1/16<br>大阪大国町 1/17–1/21</div></div>
+  <div class="info-card"><div class="label">航班</div><div class="value">1/12 13:00 到成田<br>1/21 19:30 关西起飞</div></div>
+  <div class="info-card"><div class="label">交通卡</div><div class="value">Suica、PASMO 或 ICOCA，每人一张</div></div>
+  <div class="info-card"><div class="label">城际交通</div><div class="value">1/16 晚夜巴暂定<br>新宿 → 难波 OCAT</div></div>
+</div>
+<div class="section-head">行程概览</div>
+<div class="day-list">${DAYS.slice(1).map(d=>`<div class="card" onclick="go(${d.id})"><div class="name"><span class="dot" style="background:${d.color}"></span>${d.label} · ${d.title}</div><div class="desc">${d.summary}</div></div>`).join('')}</div>
+<div class="section-head">已订住宿</div>
+<div class="pay-summary"><h4>相铁 FRESA INN 东京东阳町站前</h4>1/12–1/16 · 4 晚。15:00 入住 · 11:00 退房。東京都江東区東陽4-4-3。<div class="links"><a href="https://www.sotetsu-hotels.com/fresa-inn/toyocho/" target="_blank" rel="noopener noreferrer">酒店官网</a> · <a href="https://sotetsu-hotels.com/fresa-inn/toyocho/faq/" target="_blank" rel="noopener noreferrer">寄存说明</a></div></div>
+<div class="pay-summary"><h4>住一难波南 2</h4>1/17–1/21 · 4 晚。16:00 自助入住 · 10:00 退房。大阪府大阪市浪速区大国1-2-22。<div class="links"><a href="https://apt11.jp/en/stays/1ac071f8-2a1f-49c2-afff-388e26b0574c" target="_blank" rel="noopener noreferrer">公寓入住说明</a></div></div>
+<div class="section-head">出发前先确认</div>
+<div class="pay-summary"><h4>1/13 东京迪士尼 · 先选一个园</h4>建议 DisneySea。两园当天官网均列 09:00–21:00，成人一日票 ¥9,900，4 人合计 ¥39,600。若更想看米妮主题游行或玩美女与野兽，买 Disneyland。Sea 的《Believe! Sea of Dreams》当天停演。可在官网和 Klook 比较该日期的票价与退改政策。<div class="links"><a href="https://www.tokyodisneyresort.jp/tdr/calendar/202701/" target="_blank" rel="noopener noreferrer">官方日历</a> · <a href="https://www.tokyodisneyresort.jp/ticket/index.html" target="_blank" rel="noopener noreferrer">官方购票</a> · <a href="https://www.klook.com/zh-CN/activity/695-tokyo-disney-resort-1-day-pass-tokyo/" target="_blank" rel="noopener noreferrer">Klook 查票</a> · <a href="https://www.tokyodisneyresort.jp/en/tds/show/detail/967/" target="_blank" rel="noopener noreferrer">夜秀停演公告</a></div></div>
+<div class="pay-summary"><h4>1/16 夜巴 · 暂定，12/16 起查近铁</h4>优先查近铁ツィンクル号，新宿 22:20 → 次日难波 OCAT 07:08 是常规时刻。近铁列明提前一个月接受预约，1/16 班次可在 12/16 起查四席和票价。下单前核对每人能带的箱子尺寸与件数。若夜巴不合适，改 1/17 上午东京站 → 新大阪，把 1/16 晚东京住宿补上。<div class="links"><a href="https://www.kintetsu-bus.co.jp/highway/routelist/24" target="_blank" rel="noopener noreferrer">近铁时刻与订票</a> · <a href="https://willer-travel.com/en/bus_search/tokyo/all/osaka/umeda/" target="_blank" rel="noopener noreferrer">比较夜巴</a> · <a href="https://smart-ex.jp/en/" target="_blank" rel="noopener noreferrer">新干线备选</a></div></div>
+<div class="pay-summary"><h4>1/18 USJ · Studio Pass 和任天堂入区</h4>先查当天 Studio Pass。四人如果都把马力欧放第一，可选含任天堂园区入场时段的 Express Pass。凭 Studio Pass 进园后，也可按当天要求通过官方 App 取区券。<div class="links"><a href="https://www.usj.co.jp/web/en/us/tickets" target="_blank" rel="noopener noreferrer">USJ 购票</a> · <a href="https://www.usj.co.jp/web/ja/jp/enjoy/numbered-ticket/timed-entry-ticket" target="_blank" rel="noopener noreferrer">园区整理券</a></div></div>
+<div class="pay-summary"><h4>1/15 河口湖 · 查云量，再处理车票</h4>优先查 08:00–09:00 左右从新宿出发、15:30–16:30 左右返回的车次。订前看变更或取消条件，前一晚再看湖区天气和山顶云量。<div class="links"><a href="https://highway-buses.jp/chs/course/kawaguchiko.php" target="_blank" rel="noopener noreferrer">河口湖往返巴士</a> · <a href="https://live.fujigoko.tv/" target="_blank" rel="noopener noreferrer">富士山实时画面</a></div></div>
+<div class="pay-summary"><h4>两段航班 · 核对票面航站楼</h4>1/12 08:55 起飞、13:00 到成田。1/21 19:30 从关西起飞、21:20 到上海。航班号和航站楼未出现在截图中，接驳按票面航站楼执行。时刻均按各地当地时间。<div class="links"><a href="https://www.narita-airport.jp/en/access/train/" target="_blank" rel="noopener noreferrer">成田铁路接驳</a> · <a href="https://www.kansai-airport.or.jp/en/access/from-airport/train" target="_blank" rel="noopener noreferrer">关西铁路及 T2 接驳</a></div></div>
+<div class="section-head">交通、退税和备选</div>
+<div class="pay-summary"><h4>四人交通和支付</h4>普通电车与地铁按人各用一张 Suica、PASMO 或 ICOCA，余额记得补。高速巴士、新干线与南海 Rapi:t 分开购票。带信用卡及少量日元零钱，尤其是寄存、寺院和小店。东京酒店官网列为无现金支付。<div class="links"><a href="https://www.sotetsu-hotels.com/fresa-inn/toyocho/" target="_blank" rel="noopener noreferrer">东京酒店支付说明</a> · <a href="https://www.nankai.co.jp/en_railway/access-timetable" target="_blank" rel="noopener noreferrer">南海列车时刻</a></div></div>
+<div class="pay-summary"><h4>关西机场 · 先税关确认，再托运行李</h4>2026 年 11 月起市区免税购物先付含税价，购买时用护照登记并确认商家的退款方式。离境时在关西机场用退税终端或按海关指引使用 Visit Japan Web，凭护照完成税关确认，商品留在手边供抽查。完成后再托运，再安检和逛机场免税店。退款由店家或服务商按购买时登记的方式处理。<div class="links"><a href="https://www.customs.go.jp/kaigairyoko/taxrefund/C-details.html" target="_blank" rel="noopener noreferrer">日本海关流程</a> · <a href="https://www.customs.go.jp/kaigairyoko/taxrefund/map_CHECK.htm" target="_blank" rel="noopener noreferrer">查航站楼退税终端</a> · <a href="https://www.kansai-airport.or.jp/en/shop-and-dine/notices/kixdutyfree" target="_blank" rel="noopener noreferrer">机场免税店预订</a></div></div>
+<div class="pay-summary"><h4>行程取舍</h4>镰仓只走长谷和站前，江之岛、镰仓高校前留给另一次。富士山只做河口湖北岸，留出返程机动时间。京都只走东山到祇园，岚山、金阁寺和伏见稻荷先省掉。夜巴抵达当天只在难波和心斋桥活动。</div>
+<div class="pay-summary"><h4>餐饮口碑的依据</h4>在地点卡片可打开小红书笔记或按店名搜索。大众点评按钮直达已核对的商户页。作者的用餐感受和等候时间属于单次体验，营业时间以店家公告为准。</div>
+<div class="section-head">图例</div>
+<div class="legend">
+  <div class="legend-item"><div class="legend-dot" style="background:var(--tint-red)"></div>餐厅</div>
+  <div class="legend-item"><div class="legend-dot" style="background:var(--tint-blue)"></div>景点</div>
+  <div class="legend-item"><div class="legend-dot" style="background:var(--tint-purple)"></div>酒吧</div>
+  <div class="legend-item"><div class="legend-dot" style="background:var(--tint-orange)"></div>酒店</div>
+</div>`;
+}
+
+// ╔══════════════════════════════════════════════════════════════╗
+// ║  ENGINE — Do not modify below unless customizing behavior   ║
+// ╚══════════════════════════════════════════════════════════════╝
+
+const map = typeof L === 'undefined' ? null : L.map('map', { center: [HOTEL.lat || 35.69, HOTEL.lng || 139.74], zoom: 12, zoomControl: false, attributionControl: true });
+if (map) {
+L.control.zoom({ position: 'topright' }).addTo(map);
+L.tileLayer('https://cyberjapandata.gsi.go.jp/xyz/pale/{z}/{x}/{y}.png', { minZoom: 2, maxZoom: 18, noWrap: true, attribution: '<a href="https://maps.gsi.go.jp/development/ichiran.html">国土地理院 · 地理院タイル</a> · Shoreline: USGS VMAP0' }).addTo(map);
+
+/* ── Geolocation ── */
+const LocateControl = L.Control.extend({
+  options: { position: 'bottomright' },
+  onAdd() {
+    const btn = L.DomUtil.create('button', 'locate-btn');
+    btn.innerHTML = '📍';
+    btn.title = '我的位置';
+    L.DomEvent.disableClickPropagation(btn);
+    btn.addEventListener('click', () => {
+      btn.classList.add('active');
+      map.locate({ setView: true, maxZoom: 15 });
+    });
+    this._btn = btn;
+    return btn;
+  }
+});
+new LocateControl().addTo(map);
+let locMarker, locCircle;
+map.on('locationfound', e => {
+  const r = e.accuracy / 2;
+  if (locMarker) { locMarker.setLatLng(e.latlng); locCircle.setLatLng(e.latlng).setRadius(r); }
+  else {
+    locMarker = L.marker(e.latlng, {
+      icon: L.divIcon({ className:'', html:'<div style="width:14px;height:14px;border-radius:50%;background:#007aff;border:2.5px solid #fff;box-shadow:0 0 6px rgba(0,122,255,.5)"></div><div class="loc-pulse" style="position:absolute;top:0;left:0"></div>', iconSize:[14,14], iconAnchor:[7,7] }),
+      zIndexOffset: 2000
+    }).addTo(map);
+    locCircle = L.circle(e.latlng, { radius: r, color: '#007aff', fillColor: '#007aff', fillOpacity: .08, weight: 1 }).addTo(map);
+  }
+});
+map.on('locationerror', () => {});
+} else {
+  document.getElementById('map').innerHTML = '<div class="content">底图需要联网。仍可查看下方行程。</div>';
+}
+
+function icon(color, emoji) {
+  return L.divIcon({ className: '', html: `<div style="width:28px;height:28px;border-radius:50%;background:${color};border:2.5px solid #fff;display:flex;align-items:center;justify-content:center;font-size:13px;box-shadow:0 2px 8px rgba(0,0,0,.18)">${emoji||''}</div>`, iconSize: [28,28], iconAnchor: [14,14], popupAnchor: [0,-16] });
+}
+
+if (map) [HOTEL, HOTEL.osaka].forEach(h => {
+  L.marker([h.lat, h.lng], { icon: icon('#ff9500','🏨'), zIndexOffset: 1000 }).addTo(map).bindPopup(`<b>${h.name}</b>`);
+});
+
+let markers = [], polylines = [];
+const emojis = { food:'🍽️', spot:'📍', hotel:'🏨', transport:'🚃', drink:'🍺' };
+
+function clearMap() { markers.forEach(m=>map.removeLayer(m)); polylines.forEach(p=>map.removeLayer(p)); markers=[]; polylines=[]; }
+
+function showDay(idx) {
+  if (!map) return;
+  clearMap();
+  if (idx === 0) {
+    const pts = [];
+    DAYS.forEach(d => d.locations.forEach(l => { if(l.lat) pts.push([l.lat,l.lng]); }));
+    if(pts.length) map.fitBounds(pts, {padding:[30,30]});
+    DAYS.slice(1).forEach(d => {
+      d.locations.filter(l=>l.time!=='—').forEach(l => {
+        const m = L.circleMarker([l.lat,l.lng], { radius:4, fillColor:d.color, color:'#fff', weight:1.5, fillOpacity:.9 }).addTo(map).bindPopup(`<b>${l.name}</b><br><span style="color:#86868b">${d.label}</span>`);
+        markers.push(m);
+      });
+    });
+    return;
+  }
+  const day = DAYS.find(d=>d.id===idx);
+  if(!day) return;
+  const coords = [];
+  day.locations.forEach(l => {
+    if(!l.lat) return;
+    const m = L.marker([l.lat,l.lng], { icon: icon(day.color, emojis[l.type]||'📌') }).addTo(map);
+    const gmapQ = l.gmap||encodeURIComponent(l.name+' Tokyo');
+    m.bindPopup(`<b>${l.name}</b>${l.time!=='—'?'<br><span style="color:#86868b">'+l.time+'</span>':''}<br>${l.desc}${l.budget?'<br><span style="color:#ff9500">'+l.budget+'</span>':''}<br><a href="#" onclick="event.preventDefault();openAS('${l.name.replace(/'/g,"\\'")}',${l.lat},${l.lng},'${gmapQ}')">📍 导航</a>${l.xhs ? ' · ' + externalLink(l.xhs, '📕 小红书笔记') : ''}`);
+    markers.push(m);
+    if(l.time!=='—') coords.push([l.lat,l.lng]);
+  });
+  if(coords.length>1) { const pl = L.polyline(coords, { color:day.color, weight:2.5, opacity:.5, dashArray:'6,5' }).addTo(map); polylines.push(pl); }
+  if(coords.length) map.fitBounds(coords, { padding:[40,40], maxZoom:14 });
+}
+
+// ══════════ RENDER ══════════
+function payChips(pay) {
+  if(!pay) return '';
+  let h = '<div class="pays">';
+  const m = { cash:'💴', card:'💳', suica:'Suica', paypay:'PayPay', alipay:'支付宝', wechat:'微信' };
+  for(const [k,label] of Object.entries(m)) {
+    if(pay[k]!==undefined) { const c = pay[k]===1?'ok':pay[k]===0.5?'idk':'no'; h += `<span class="pay ${c}">${label}</span>`; }
+  }
+  return h+'</div>';
+}
+
+// ── 运行环境检测：在第三方 App 的 WebView 里，自定义 scheme 基本会被拦截 ──
+const IN_APP_WEBVIEW = (() => {
+  const ua = (navigator.userAgent || '').toLowerCase();
+  return /micromessenger|xhs|xhsdiscover|discover\/|tiktok|aweme|weibo|qq\/|qqbrowser|alipayclient|dingtalk|lark|feishu|ucbrowser|baiduboxapp|toutiao|newsarticle/.test(ua);
+})();
+
+function escapeLink(value) {
+  return String(value).replace(/&/g, '&amp;').replace(/"/g, '&quot;').replace(/</g, '&lt;');
+}
+
+function externalLink(url, label, className = '') {
+  return `<a class="${className}" href="${escapeLink(url)}" target="_blank" rel="noopener noreferrer">${label}</a>`;
+}
+
+function xhsSearchUrl(loc) {
+  return `https://www.xiaohongshu.com/search_result?keyword=${encodeURIComponent(loc.xhsKeyword)}`;
+}
+
+async function copyXhsKeyword(event) {
+  event.preventDefault();
+  const trigger = event.currentTarget;
+  const keyword = trigger.dataset.xhsKeyword;
+  try {
+    await navigator.clipboard.writeText(keyword);
+    trigger.textContent = '已复制搜索词';
+  } catch {
+    window.prompt('复制以下关键词，到小红书 App 搜索', keyword);
+  }
+}
+
+function locCard(loc, dayIdx) {
+  const dot = loc.type==='food'?'food':loc.type==='spot'?'spot':loc.type==='drink'?'drink':loc.type==='hotel'?'hotel':'transport';
+  const bdg = loc.type==='food'?'<span class="badge food">餐</span>':loc.type==='spot'?'<span class="badge spot">景</span>':loc.type==='drink'?'<span class="badge drink">饮</span>':'';
+  const uid = `d${dayIdx}-${DAYS[dayIdx].locations.indexOf(loc)}`;
+  const gmapQ = loc.gmap||encodeURIComponent(loc.name+' Tokyo');
+  let lnk = `<button class="btn nav" onclick="openAS('${loc.name.replace(/'/g,"\\'")}',${loc.lat},${loc.lng},'${gmapQ}')">📍 导航</button>`;
+  if (loc.xhs) lnk += externalLink(loc.xhs, '📕 小红书笔记', 'btn xhs');
+  else if (loc.xhsKeyword) lnk += externalLink(xhsSearchUrl(loc), '📕 小红书搜索', 'btn xhs');
+  if (loc.dianping) lnk += externalLink(loc.dianping, '🍜 大众点评', 'btn dp');
+  const search = loc.xhs && loc.xhsKeyword ? externalLink(xhsSearchUrl(loc), '用店名搜索小红书') : '';
+  const copy = loc.xhsKeyword ? `<a href="#" data-xhs-keyword="${escapeLink(loc.xhsKeyword)}" onclick="copyXhsKeyword(event)">复制搜索词</a>` : '';
+  const detail = [loc.detail, [search, copy].filter(Boolean).join(' · ')].filter(Boolean).join('\n');
+  if(loc.reserve) lnk += `<a href="${loc.reserve}" target="_blank" class="btn rsv">📅 预约</a>`;
+  return `<div class="tl-item"><div class="tl-dot ${dot}"></div><div class="card" onclick="if(!event.target.closest('a,button,.links'))toggle('${uid}')"><div class="time">${loc.time!=='—'?loc.time:'备选'}</div><div class="name">${bdg} ${loc.name}</div><div class="desc">${loc.desc}</div>${loc.budget?'<div class="budget">'+loc.budget+'</div>':''}${payChips(loc.pay)}<div class="links">${lnk}</div>${detail?'<div class="details" id="'+uid+'">'+detail.replace(/\n/g,'<br>')+'</div>':''}</div></div>`;
+}
+
+function renderDay(idx) {
+  const d = DAYS.find(x=>x.id===idx); if(!d) return '';
+  const main = d.locations.filter(l=>l.time!=='—');
+  const alt = d.locations.filter(l=>l.time==='—');
+  let h = `<div class="day-head"><h2>${d.title}</h2><p>${d.date}</p></div><div class="route-bar">${d.route}</div>`;
+  if(main.length) { h += '<div class="section-head">行程</div><div class="timeline">'; main.forEach(l => h += locCard(l, idx)); h += '</div>'; }
+  if(alt.length) { h += '<div class="section-head">备选</div><div class="timeline">'; alt.forEach(l => h += locCard(l, idx)); h += '</div>'; }
+  return h;
+}
+
+// ══════════ NAV ══════════
+let cur = 0;
+const tabsEl = document.getElementById('tabs');
+const contentEl = document.getElementById('content');
+
+DAYS.forEach(d => {
+  const btn = document.createElement('button');
+  btn.className = 'tab' + (d.id===0?' active':'');
+  btn.dataset.day = d.id;
+  btn.textContent = d.label;
+  tabsEl.appendChild(btn);
+});
+
+function go(idx) {
+  cur = idx;
+  tabsEl.querySelectorAll('.tab').forEach(t => t.classList.toggle('active', +t.dataset.day===idx));
+  contentEl.innerHTML = idx===0 ? overviewContent() : renderDay(idx);
+  showDay(idx);
+  window.scrollTo({top:0});
+  history.replaceState(null, '', idx ? `#day-${idx}` : '#overview');
+  const tab = tabsEl.querySelector(`[data-day="${idx}"]`);
+  if(tab) tab.scrollIntoView({behavior:'smooth', inline:'center', block:'nearest'});
+}
+
+function toggle(id) { const el=document.getElementById(id); if(el) el.classList.toggle('closed'); }
+
+tabsEl.addEventListener('click', e => { const t=e.target.closest('.tab'); if(t) go(+t.dataset.day); });
+
+const initialDay = Number(location.hash.match(/^#day-(\d+)$/)?.[1] || 0);
+go(DAYS[initialDay] ? initialDay : 0);
+
+/* ── Action Sheet for Navigation ── */
+const asOverlay = document.createElement('div');
+asOverlay.className = 'as-overlay';
+asOverlay.innerHTML = `<div class="as-sheet">
+  <div class="as-group" id="as-opts"></div>
+  <div class="as-group"><button class="as-item as-cancel" onclick="closeAS()">取消</button></div>
+</div>`;
+document.body.appendChild(asOverlay);
+asOverlay.addEventListener('click', e => { if (e.target === asOverlay) closeAS(); });
+
+const IS_IOS = /iPad|iPhone|iPod/.test(navigator.userAgent);
+function amapAppUrl(name, lat, lng) {
+  const scheme = IS_IOS ? 'iosamap' : 'androidamap';
+  return `${scheme}://viewMap?sourceApplication=trip&poiname=${encodeURIComponent(name)}&lat=${lat}&lon=${lng}&dev=0`;
+}
+function amapWebUrl(name, lat, lng) {
+  return `https://uri.amap.com/marker?position=${lng},${lat}&name=${encodeURIComponent(name)}&src=trip&coordinate=wgs84&callnative=1`;
+}
+function openAmap(name, lat, lng) {
+  if (IN_APP_WEBVIEW) { window.open(amapWebUrl(name, lat, lng)); return; }
+  window.location.href = amapAppUrl(name, lat, lng);
+}
+
+function openAS(name, lat, lng, gmap) {
+  const q = gmap || encodeURIComponent(name + ' Tokyo');
+  const encName = encodeURIComponent(name);
+  const safeName = name.replace(/'/g,"\\'");
+  // WebView 内 maps:// 通常被拦截，改用 https Apple Maps URL —— iOS 系统会自动拉起 Apple Maps
+  const appleUrl = IN_APP_WEBVIEW
+    ? `https://maps.apple.com/?q=${lat},${lng}&ll=${lat},${lng}&name=${encName}`
+    : `maps://maps.apple.com/?q=${lat},${lng}&name=${encName}`;
+  const googleUrl = `https://www.google.com/maps/search/?api=1&query=${q}`;
+  document.getElementById('as-opts').innerHTML =
+    `<button class="as-item" onclick="window.open('${appleUrl}');closeAS()">🍎 Apple Maps</button>` +
+    `<button class="as-item" onclick="window.open('${googleUrl}');closeAS()">🗺️ Google Maps</button>` +
+    `<button class="as-item" onclick="openAmap('${safeName}',${lat},${lng});closeAS()">🧭 高德地图 App</button>`;
+  asOverlay.classList.add('show');
+}
+function closeAS() { asOverlay.classList.remove('show'); }
+</script>
+</body>
+</html>
